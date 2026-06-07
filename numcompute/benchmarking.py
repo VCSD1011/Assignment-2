@@ -7,25 +7,7 @@ import numpy as np
 
 @contextlib.contextmanager
 def timer(label=""):
-    """Context manager that prints elapsed wall time on exit.
-
-    Parameters
-    ----------
-    label : str, optional
-        A descriptive label printed alongside the timing.
-
-    Yields
-    ------
-    dict
-        A single-key dict ``{'elapsed': float}`` whose value is populated
-        with the elapsed time (in seconds) when the block exits.
-
-    Examples
-    --------
-    >>> with timer("matrix multiply") as t:
-    ...     result = A @ B
-    >>> print(t['elapsed'])
-    """
+   
     record = {"elapsed": None}
     start = time.perf_counter()
     try:
@@ -39,51 +21,7 @@ def timer(label=""):
 # 2. Single-function benchmark
 
 def benchmark(fn, n_runs=100, warmup=5, label=""):
-    """Run a zero-argument callable ``fn`` repeatedly and return timing stats.
 
-    A short warmup phase runs first (results discarded) to allow Python's JIT
-    caches, OS page faults, and NumPy buffer warm-up to stabilise before the
-    timed runs begin.
-
-    Parameters
-    ----------
-    fn : callable
-        A zero-argument callable (``lambda`` or ``functools.partial``).
-    n_runs : int, optional
-        Number of timed repetitions.  Default: 100.
-    warmup : int, optional
-        Number of untimed warm-up calls before recording starts.  Default: 5.
-    label : str, optional
-        Descriptive label used in printed output.
-
-    Returns
-    -------
-    stats : dict with keys
-        - ``'label'``   (str)   : The label argument.
-        - ``'n_runs'``  (int)   : Number of timed runs.
-        - ``'mean_s'``  (float) : Mean elapsed time per run, in seconds.
-        - ``'std_s'``   (float) : Standard deviation of elapsed times.
-        - ``'min_s'``   (float) : Fastest single run.
-        - ``'max_s'``   (float) : Slowest single run.
-        - ``'total_s'`` (float) : Total time for all timed runs.
-        - ``'times'``   (np.ndarray) : Raw per-run times (shape: (n_runs,)).
-
-    Raises
-    ------
-    TypeError
-        If ``fn`` is not callable, or ``n_runs`` / ``warmup`` are not ints.
-    ValueError
-        If ``n_runs`` < 1 or ``warmup`` < 0.
-
-    Time Complexity
-    ---------------
-    O(n_runs * cost(fn))
-
-    Examples
-    --------
-    >>> stats = benchmark(lambda: np.sort(X), n_runs=200, label="np.sort")
-    >>> print(f"Mean: {stats['mean_s']*1000:.3f} ms")
-    """
     # 2.1 Input validation
     if not callable(fn):
         raise TypeError(f"'fn' must be callable. Got: {type(fn)}")
@@ -118,44 +56,7 @@ def benchmark(fn, n_runs=100, warmup=5, label=""):
 # 3. Head-to-head comparison
 
 def compare(label, vectorised_fn, loop_fn, n_runs=100, warmup=5):
-    """Benchmark two implementations and print a formatted comparison table.
-
-    Parameters
-    ----------
-    label : str
-        Human-readable description of what is being benchmarked
-        (e.g., ``"Column mean"``).
-    vectorised_fn : callable
-        The fast NumPy / vectorised implementation (zero-argument callable).
-    loop_fn : callable
-        The reference Python-loop implementation (zero-argument callable).
-    n_runs : int, optional
-        Number of timed repetitions per implementation.  Default: 100.
-    warmup : int, optional
-        Number of warm-up calls per implementation.  Default: 5.
-
-    Returns
-    -------
-    result : dict with keys
-        - ``'label'``       : The label string.
-        - ``'vectorised'``  : Stats dict from ``benchmark()`` for vectorised_fn.
-        - ``'loop'``        : Stats dict from ``benchmark()`` for loop_fn.
-        - ``'speedup'``     : loop_mean / vectorised_mean  (>1 means vectorised wins).
-
-    Examples
-    --------
-    >>> compare(
-    ...     label="Column sum",
-    ...     vectorised_fn=lambda: np.sum(X, axis=0),
-    ...     loop_fn=lambda: [sum(X[:, j]) for j in range(X.shape[1])],
-    ... )
-    """
-    vec_stats  = benchmark(vectorised_fn, n_runs=n_runs, warmup=warmup, label="vectorised")
-    loop_stats = benchmark(loop_fn,        n_runs=n_runs, warmup=warmup, label="loop")
-
-    speedup = loop_stats["mean_s"] / vec_stats["mean_s"] if vec_stats["mean_s"] > 0 else float("inf")
-
-    # 3.1 Pretty-print table
+    
     _print_comparison(label, vec_stats, loop_stats, speedup)
 
     return {
@@ -167,15 +68,7 @@ def compare(label, vectorised_fn, loop_fn, n_runs=100, warmup=5):
 
 
 def _print_comparison(label, vec_stats, loop_stats, speedup):
-    """Print a compact, aligned comparison table to stdout.
 
-    Parameters
-    ----------
-    label      : str
-    vec_stats  : dict  (from benchmark())
-    loop_stats : dict  (from benchmark())
-    speedup    : float
-    """
     col = 20  # column width for alignment
     sep = "-" * 65
     print(f"\n{'='*65}")
@@ -205,21 +98,7 @@ def _print_comparison(label, vec_stats, loop_stats, speedup):
 # 4. BenchmarkSuite — collect and report multiple comparisons
 
 class BenchmarkSuite:
-    """Collects multiple benchmark comparisons and prints a final summary table.
 
-    Parameters
-    ----------
-    name : str, optional
-        A title for this suite, printed in the summary header.
-
-    Examples
-    --------
-    >>> suite = BenchmarkSuite(name="NumCompute vs Loop")
-    >>> suite.add("Column mean",  lambda: np.mean(X, axis=0),       loop_mean_fn)
-    >>> suite.add("Sorting",      lambda: np.sort(X, axis=0),        loop_sort_fn)
-    >>> suite.run_all(n_runs=150)
-    >>> suite.summary()
-    """
 
     def __init__(self, name="Benchmark Suite"):
         self.name = name
@@ -227,40 +106,14 @@ class BenchmarkSuite:
         self._results = []    # populated by run_all()
 
     def add(self, label, vectorised_fn, loop_fn):
-        """Register a new benchmark comparison.
 
-        Parameters
-        ----------
-        label : str
-            Short description of the operation being benchmarked.
-        vectorised_fn : callable
-            Zero-argument callable for the vectorised implementation.
-        loop_fn : callable
-            Zero-argument callable for the loop baseline.
-
-        Returns
-        -------
-        self : BenchmarkSuite  (allows chaining)
-        """
         if not callable(vectorised_fn) or not callable(loop_fn):
             raise TypeError("Both 'vectorised_fn' and 'loop_fn' must be callable.")
         self._cases.append((label, vectorised_fn, loop_fn))
         return self
 
     def run_all(self, n_runs=100, warmup=5):
-        """Run every registered comparison and store results.
 
-        Parameters
-        ----------
-        n_runs : int, optional
-            Repetitions per function.  Default: 100.
-        warmup : int, optional
-            Warmup calls per function.  Default: 5.
-
-        Returns
-        -------
-        self : BenchmarkSuite
-        """
         self._results.clear()
         for label, vec_fn, loop_fn in self._cases:
             result = compare(label, vec_fn, loop_fn, n_runs=n_runs, warmup=warmup)
@@ -268,13 +121,7 @@ class BenchmarkSuite:
         return self
 
     def summary(self):
-        """Print a single-page summary table of all benchmark results.
-
-        Returns
-        -------
-        list of dict
-            The raw results list (one entry per registered comparison).
-        """
+     
         if not self._results:
             print("No results yet. Call .run_all() first.")
             return []
@@ -312,31 +159,7 @@ class BenchmarkSuite:
 # 5. Default benchmark suite — demonstrates NumCompute vs Python loops
 
 def run_default_benchmarks(n_rows=5_000, n_cols=20, n_runs=100):
-    """Run a standard set of benchmarks comparing NumPy vectorised ops vs loops.
 
-    This function is the primary deliverable benchmark as required by the
-    assignment spec.  It compares several NumCompute-style operations against
-    equivalent pure-Python loop implementations.
-
-    Parameters
-    ----------
-    n_rows : int, optional
-        Number of rows in the synthetic dataset.  Default: 5000.
-    n_cols : int, optional
-        Number of columns.  Default: 20.
-    n_runs : int, optional
-        Repetitions per function per comparison.  Default: 100.
-
-    Returns
-    -------
-    BenchmarkSuite
-        The fitted suite (call .summary() again if you want to re-print).
-
-    Examples
-    --------
-    >>> from numcompute.benchmarking import run_default_benchmarks
-    >>> suite = run_default_benchmarks(n_rows=10_000, n_cols=50)
-    """
     rng = np.random.default_rng(seed=42)
     X   = rng.standard_normal((n_rows, n_cols))
 
