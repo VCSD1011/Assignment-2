@@ -8,47 +8,6 @@ else:
 # Pipeline
 
 class Pipeline(BaseTransformer):
-    """Chains a fixed sequence of transformers, with an optional final estimator.
-
-    Each intermediate step must implement the BaseTransformer API (.fit and
-    .transform).  The last step may be a plain estimator that only implements
-    .fit and .predict (no .transform required).
-
-    Parameters
-    ----------
-    steps : list of (str, transformer/estimator) tuples
-        Ordered list of ``(name, object)`` pairs.  Names must be unique strings;
-        they are used for error messages and future parameter access.
-
-    Attributes
-    ----------
-    steps : list of (str, object)
-        The validated pipeline steps.
-    _is_fitted : bool
-        Inherited safety flag; True after .fit() has been called.
-
-    Raises
-    ------
-    TypeError
-        If ``steps`` is not a list of 2-tuples.
-    ValueError
-        If step names are not unique strings, or if an intermediate step does
-        not implement the required transformer interface.
-    RuntimeError
-        If .transform() or .predict() is called before .fit().
-
-    Time Complexity
-    ---------------
-    fit          : O(sum of each step's fit cost)
-    transform    : O(sum of each step's transform cost)
-    fit_transform: O(fit + transform) — uses a single pass, not two.
-
-    Examples
-    --------
-    >>> pipe = Pipeline([('scale', StandardScaler()), ('encode', OneHotEncoder())])
-    >>> X_tr = pipe.fit_transform(X_train)
-    >>> X_te = pipe.transform(X_test)
-    """
 
     def __init__(self, steps):
         # Inherit _is_fitted safety flag from BaseEstimator via BaseTransformer
@@ -60,21 +19,7 @@ class Pipeline(BaseTransformer):
 
     @staticmethod
     def _validate_steps(steps):
-        """Raises informative errors if the steps list is malformed.
 
-        Parameters
-        ----------
-        steps : any
-            The value passed to __init__; must be a list of (str, object) pairs.
-
-        Raises
-        ------
-        TypeError
-            If ``steps`` is not a list of 2-tuples.
-        ValueError
-            If names are not unique strings, or if an intermediate step is
-            missing .fit / .transform.
-        """
         if not isinstance(steps, list) or len(steps) == 0:
             raise TypeError(
                 "Pipeline 'steps' must be a non-empty list of (name, estimator) tuples. "
@@ -124,18 +69,7 @@ class Pipeline(BaseTransformer):
 
     @property
     def named_steps(self):
-        """dict: Maps step names to estimator objects for convenient access.
 
-        Returns
-        -------
-        dict
-            ``{name: estimator}`` for every step in the pipeline.
-
-        Examples
-        --------
-        >>> pipe.named_steps['scale']
-        StandardScaler()
-        """
         return dict(self.steps)
 
     @property
@@ -151,29 +85,7 @@ class Pipeline(BaseTransformer):
     # Core API
 
     def fit(self, X, y=None):
-        """Fit every step in the pipeline sequentially on X (and y).
 
-        Intermediate steps are fitted and their transformation is applied
-        before passing data to the next step.  The final step is fitted on
-        the output of all previous transformations.
-
-        Parameters
-        ----------
-        X : np.ndarray, shape (n_samples, n_features)
-            Input training data.
-        y : np.ndarray, shape (n_samples,), optional
-            Target values.  Passed through to each step unchanged.
-
-        Returns
-        -------
-        self : Pipeline
-            Fitted pipeline (allows method chaining).
-
-        Raises
-        ------
-        RuntimeError
-            If any step raises during fitting.
-        """
         X_current = np.array(X, dtype=float)
 
         # Fit-transform all intermediate steps so each step learns on the
@@ -199,26 +111,7 @@ class Pipeline(BaseTransformer):
         return self
 
     def transform(self, X):
-        """Apply the learned transformations to X.
 
-        The final step must implement .transform().  If the final step is a
-        pure estimator (e.g., a classifier), use .predict() instead.
-
-        Parameters
-        ----------
-        X : np.ndarray, shape (n_samples, n_features)
-            Data to transform.
-
-        Returns
-        -------
-        X_out : np.ndarray
-            Transformed data after passing through every step.
-
-        Raises
-        ------
-        RuntimeError
-            If called before .fit(), or if the final step has no .transform().
-        """
         # Inherited guard from BaseTransformer
         super().transform(X)
 
@@ -241,23 +134,7 @@ class Pipeline(BaseTransformer):
         return X_current
 
     def fit_transform(self, X, y=None):
-        """Fit all steps and return the transformed training data.
 
-        More efficient than calling .fit(X).transform(X) because intermediate
-        steps each perform a single fit+transform pass instead of two passes.
-
-        Parameters
-        ----------
-        X : np.ndarray, shape (n_samples, n_features)
-            Training data.
-        y : np.ndarray, shape (n_samples,), optional
-            Target values.
-
-        Returns
-        -------
-        X_out : np.ndarray
-            Fully transformed training data.
-        """
         X_current = np.array(X, dtype=float)
 
         for name, transformer in self._intermediate_steps:
@@ -290,26 +167,7 @@ class Pipeline(BaseTransformer):
         return X_current
 
     def predict(self, X):
-        """Transform X through all steps, then call .predict() on the final step.
 
-        Use this when the last pipeline step is a model (e.g., a classifier or
-        regressor) rather than a transformer.
-
-        Parameters
-        ----------
-        X : np.ndarray, shape (n_samples, n_features)
-            Input data.
-
-        Returns
-        -------
-        y_pred : np.ndarray, shape (n_samples,)
-            Predictions from the final estimator.
-
-        Raises
-        ------
-        RuntimeError
-            If called before .fit(), or if the final step has no .predict().
-        """
         if not self._is_fitted:
             raise RuntimeError("Pipeline must be fitted before calling predict.")
 
@@ -333,13 +191,7 @@ class Pipeline(BaseTransformer):
 
 
     def partial_fit(self, X, y=None):
-        """Incrementally fit transformers and the final estimator on one chunk.
 
-        Each intermediate step is updated with partial_fit when available,
-        otherwise fit is used as a fallback. The transformed chunk is then
-        passed forward to the next step. The final estimator must implement
-        partial_fit or fit.
-        """
         X_current = np.array(X, dtype=float)
 
         for name, transformer in self._intermediate_steps:
@@ -369,13 +221,7 @@ class Pipeline(BaseTransformer):
         return self
 
     def get_params(self):
-        """Return a dict of all step names mapped to their estimator objects.
 
-        Returns
-        -------
-        dict
-            ``{name: estimator}`` for every step.
-        """
         return self.named_steps
 
     def __repr__(self):
@@ -386,43 +232,7 @@ class Pipeline(BaseTransformer):
 # FeatureUnion
 
 class FeatureUnion(BaseTransformer):
-    """Runs multiple transformers in parallel and concatenates their outputs.
 
-    Each transformer in the union is fitted independently on the same input X.
-    During transform, their outputs are concatenated column-wise (axis=1).
-
-    Parameters
-    ----------
-    transformer_list : list of (str, transformer) tuples
-        Transformers to run in parallel.  Each must implement .fit and .transform.
-
-    Attributes
-    ----------
-    transformer_list : list of (str, transformer)
-        The validated transformers.
-    _is_fitted : bool
-        True after .fit() has been called.
-
-    Raises
-    ------
-    TypeError / ValueError
-        If the transformer list is malformed (same rules as Pipeline).
-    RuntimeError
-        If .transform() is called before .fit().
-
-    Time Complexity
-    ---------------
-    fit       : O(sum of individual fit costs)  — transformers run sequentially
-    transform : O(sum of transform costs + concatenation)
-
-    Examples
-    --------
-    >>> union = FeatureUnion([
-    ...     ('numeric', StandardScaler()),
-    ...     ('encoded', OneHotEncoder()),
-    ... ])
-    >>> X_combined = union.fit_transform(X)
-    """
 
     def __init__(self, transformer_list):
         super().__init__()
@@ -433,19 +243,7 @@ class FeatureUnion(BaseTransformer):
 
     @staticmethod
     def _validate_transformer_list(transformer_list):
-        """Check that every entry is a (str, transformer) pair with .fit/.transform.
 
-        Parameters
-        ----------
-        transformer_list : any
-
-        Raises
-        ------
-        TypeError
-            If not a list of 2-tuples.
-        ValueError
-            If names are not unique, or a transformer lacks .fit/.transform.
-        """
         if not isinstance(transformer_list, list) or len(transformer_list) == 0:
             raise TypeError(
                 "FeatureUnion 'transformer_list' must be a non-empty list of "
@@ -508,22 +306,7 @@ class FeatureUnion(BaseTransformer):
         return self
 
     def transform(self, X):
-        """Transform X with every transformer and concatenate column-wise.
 
-        Parameters
-        ----------
-        X : np.ndarray, shape (n_samples, n_features)
-
-        Returns
-        -------
-        X_out : np.ndarray, shape (n_samples, sum_of_output_features)
-            Column-wise concatenation of each transformer's output.
-
-        Raises
-        ------
-        RuntimeError
-            If called before .fit().
-        """
         # Inherited fitted guard
         super().transform(X)
 
@@ -545,12 +328,7 @@ class FeatureUnion(BaseTransformer):
         return np.hstack(parts)
 
     def get_params(self):
-        """Return a dict of transformer names mapped to their objects.
 
-        Returns
-        -------
-        dict
-        """
         return dict(self.transformer_list)
 
     def __repr__(self):
