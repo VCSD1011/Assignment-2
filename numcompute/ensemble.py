@@ -1,5 +1,3 @@
-"""Streaming ensemble classifier built from NumCompute decision trees."""
-
 import numpy as np
 
 try:
@@ -9,7 +7,7 @@ except ImportError:
 
 
 class EnsembleClassifier:
-    """Bagging-style ensemble of decision trees with partial_fit support."""
+    """Ensemble of decision trees with partial_fit support."""
 
     def __init__(
         self,
