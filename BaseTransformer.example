@@ -1,0 +1,157 @@
+"""
+=============================================================================
+NumCompute Base Architecture Example & Guide
+=============================================================================
+
+This file demonstrates the required architecture for all machine learning 
+estimators and transformers in the NumCompute toolkit.
+
+WHY WE USE THIS:
+1. API Consistency: Ensures every team member writes modules that interlock.
+2. Pipeline Integration: Allows pipeline.py to chain operations blindly.
+3. Edge Case Safety: Prevents users from transforming data before fitting.
+4. Vectorization: Encourages using fit_transform for unified NumPy operations.
+
+HOW TO USE THIS GUIDE:
+- Do NOT modify the BaseEstimator or BaseTransformer classes.
+- When building a new module (e.g., MinMaxScaler, Imputer), inherit from BaseTransformer.
+- ONLY implement `fit()` and `transform()`. 
+- NEVER overwrite `fit_transform()` unless a mathematical shortcut exists.
+"""
+
+import numpy as np
+
+# =============================================================================
+# 1. THE BASE CLASSES (To be placed in numcompute/utils.py)
+# =============================================================================
+
+class BaseEstimator:
+    """Base class for all estimators in NumCompute.
+    
+    All estimators must implement `fit` and provide a consistent interface.
+    """
+    def __init__(self):
+        # Safety flag to ensure the model has learned from data before predicting/transforming.
+        self._is_fitted = False
+
+    def fit(self, X, y=None):
+        """Learns the parameters from the training data.
+        
+        Args:
+            X (np.ndarray): Input data of shape (n_samples, n_features).
+            y (np.ndarray, optional): Target values. Defaults to None.
+            
+        Returns:
+            self: Returns the instance itself to allow for method chaining.
+        """
+        self._is_fitted = True
+        return self
+
+
+class BaseTransformer(BaseEstimator):
+    """Base class for all transformers (e.g., Scalers, Imputers, Encoders)."""
+    
+    def transform(self, X):
+        """Applies the learned transformation to the input data.
+        
+        Args:
+            X (np.ndarray): Input data of shape (n_samples, n_features).
+            
+        Returns:
+            np.ndarray: Transformed data of shape (n_samples, n_features).
+            
+        Raises:
+            RuntimeError: If called before `fit()` has been executed.
+        """
+        if not self._is_fitted:
+            raise RuntimeError("Estimator must be fitted before calling transform.")
+        return X
+
+    def fit_transform(self, X, y=None):
+        """Fits the transformer to X and immediately returns the transformed X.
+        
+        This method is provided automatically to all inheriting classes.
+        """
+        return self.fit(X, y).transform(X)
+
+
+# =============================================================================
+# 2. IMPLEMENTATION EXAMPLE (How team members should write their code)
+# =============================================================================
+
+class MeanCenteringScaler(BaseTransformer):
+    """A simple transformer that centers data around zero by subtracting the mean.
+    
+    This is an example of how a team member should implement a module.
+    Notice how __init__, fit, and transform are the ONLY methods written.
+    """
+    
+    def __init__(self):
+        # 1. ALWAYS call super() to inherit the `_is_fitted` safety flag.
+        super().__init__()
+        
+        # 2. Initialize internal state variables to None.
+        self.mean_ = None
+
+    def fit(self, X, y=None):
+        """Calculates and stores the column means."""
+        # Calculate parameters (using nanmean to handle missing data safely)
+        self.mean_ = np.nanmean(X, axis=0)
+        
+        # MUST set to True, otherwise transform() will crash
+        self._is_fitted = True 
+        
+        # MUST return self
+        return self
+
+    def transform(self, X):
+        """Subtracts the stored mean from the incoming data."""
+        # 1. ALWAYS call the parent transform to check if the model is fitted.
+        super().transform(X)
+        
+        # 2. Perform fully vectorized NumPy operations (No Python loops!)
+        return X - self.mean_
+
+
+# =============================================================================
+# 3. USAGE EXAMPLE (How the end-user or pipeline.py will interact with it)
+# =============================================================================
+
+if __name__ == "__main__":
+    print("--- NumCompute Base API Demonstration ---\n")
+    
+    # 1. Create some dummy data (3 samples, 2 features)
+    X_train = np.array([
+        [10.0, 2.0],
+        [20.0, 4.0],
+        [30.0, 6.0]
+    ])
+    
+    X_test = np.array([
+        [15.0, 3.0],
+        [25.0, 5.0]
+    ])
+
+    print("Original Training Data:\n", X_train)
+    print("\nOriginal Test Data:\n", X_test)
+    
+    # 2. Initialize our custom scaler
+    scaler = MeanCenteringScaler()
+    
+    # 3. Attempting to transform before fitting will throw our custom error
+    try:
+        scaler.transform(X_train)
+    except RuntimeError as e:
+        print(f"\n[Safety Catch] {e}")
+
+    # 4. Use fit_transform on the training data (Inherited from BaseTransformer)
+    print("\n--- Fitting and Transforming Training Data ---")
+    X_train_scaled = scaler.fit_transform(X_train)
+    
+    print(f"Learned Means: {scaler.mean_}")
+    print("Centered Training Data:\n", X_train_scaled)
+
+    # 5. Use ONLY transform on the test data (Applying the learned parameters)
+    print("\n--- Transforming Test Data ---")
+    X_test_scaled = scaler.transform(X_test)
+    print("Centered Test Data:\n", X_test_scaled)
