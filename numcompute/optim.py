@@ -2,15 +2,6 @@ import numpy as np
 
 def grad(f, x, h=1e-5, method='central'):
     """Estimates the gradient of a scalar-valued function f at vector x.
-    
-    Args:
-        f (callable): Function taking a 1D np.ndarray and returning a float.
-        x (np.ndarray): 1D array of shape (n,) representing the evaluation point.
-        h (float): Step size for finite differences. Defaults to 1e-5.
-        method (str): 'central' or 'forward'. Defaults to 'central'.
-        
-    Returns:
-        np.ndarray: Gradient vector of shape (n,).
     """
     x = np.asarray(x, dtype=float)
     n = x.size
@@ -37,17 +28,7 @@ def grad(f, x, h=1e-5, method='central'):
     return g
 
 def jacobian(F, x, h=1e-5, method='central'):
-    """Estimates the Jacobian matrix of a vector-valued function F at vector x.
-    
-    Args:
-        F (callable): Function taking a 1D array (n,) and returning a 1D array (m,).
-        x (np.ndarray): 1D array of shape (n,) representing the evaluation point.
-        h (float): Step size for finite differences. Defaults to 1e-5.
-        method (str): 'central' or 'forward'. Defaults to 'central'.
-        
-    Returns:
-        np.ndarray: Jacobian matrix of shape (m, n).
-    """
+
     x = np.asarray(x, dtype=float)
     n = x.size
     
