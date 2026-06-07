@@ -11,17 +11,6 @@ except ImportError:
 
 
 class StreamTrainer:
-    """Manage chunk-by-chunk model training, scoring and logging.
-
-    Parameters
-    ----------
-    estimator : object
-        Model or Pipeline implementing partial_fit/predict.
-    labels : array-like, optional
-        Labels for classification metric accumulation.
-    metric_tracker : object, optional
-        Custom metric object with update() and result().
-    """
 
     def __init__(self, estimator, labels=None, metric_tracker=None):
         self.estimator = estimator
