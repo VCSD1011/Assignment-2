@@ -1,4 +1,4 @@
-"""Depth-limited decision tree classifier with streaming partial_fit."""
+
 
 from dataclasses import dataclass
 import numpy as np
@@ -15,12 +15,7 @@ class _Node:
 
 
 class DecisionTreeClassifier:
-    """Small NumPy decision tree classifier for batch and streaming use.
 
-    The streaming behaviour stores the chunks seen so far and rebuilds the tree
-    after each partial_fit. This is simple, deterministic, and supports online
-    adaptation while keeping the tree logic easy to test and maintain.
-    """
 
     def __init__(self, max_depth=5, min_samples_split=2, max_features=None, criterion="gini", random_state=None):
         if criterion not in {"gini", "entropy"}:
