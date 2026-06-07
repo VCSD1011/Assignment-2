@@ -70,15 +70,7 @@ def auc(fpr, tpr):
 
 
 class StreamingClassificationMetrics:
-    """Accumulate classification metrics across chunks.
-
-    Parameters
-    ----------
-    labels : array-like, optional
-        Class labels used to build the confusion matrix.
-    window_size : int, optional
-        If provided, result() is computed over the latest window_size samples.
-    """
+    """Accumulate classification metrics across chunks. """
 
     def __init__(self, labels=None, window_size=None):
         self.labels = np.array([0, 1]) if labels is None else np.array(labels)
