@@ -1,15 +1,4 @@
-"""Streaming demo for Assignment 2.2 NumCompute individual submission.
 
-Run from the project root:
-    python demo/stream_demo.py
-
-The script shows the required streaming workflow:
-1. Generate small data chunks.
-2. Update a Pipeline chunk-by-chunk using partial_fit().
-3. Train an EnsembleClassifier incrementally.
-4. Track cumulative streaming metrics with StreamTrainer.
-5. Save an accuracy-over-time plot using visualise.py.
-"""
 
 import os
 import sys
