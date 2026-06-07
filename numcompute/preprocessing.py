@@ -1,8 +1,3 @@
-"""Streaming preprocessing utilities for NumCompute.
-
-The classes keep the original fit/transform API and add partial_fit so they can
-be updated safely one chunk at a time in streaming pipelines.
-"""
 
 import numpy as np
 
@@ -13,11 +8,7 @@ else:
 
 
 class StandardScaler(BaseTransformer):
-    """Z-score scaler with batch and incremental fitting.
 
-    partial_fit uses a vectorised running mean/variance update, ignoring NaN
-    values independently per feature.
-    """
 
     def __init__(self):
         super().__init__()
@@ -137,11 +128,6 @@ class MinMaxScaler(BaseTransformer):
 
 
 class OneHotEncoder(BaseTransformer):
-    """Incremental one-hot encoder.
-
-    New categories discovered during partial_fit are appended to each feature's
-    category list. transform keeps a stable column order based on discovery.
-    """
 
     def __init__(self, handle_unknown="error"):
         super().__init__()
@@ -184,7 +170,6 @@ class OneHotEncoder(BaseTransformer):
 
 
 class Imputer(BaseTransformer):
-    """Replace missing values using a constant or streaming feature means."""
 
     def __init__(self, strategy="constant", fill_value=0.0):
         super().__init__()
