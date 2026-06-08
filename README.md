@@ -138,28 +138,6 @@ The test suite covers previous Assignment 2.1 functionality and new Assignment 2
 
 ---
 
-## Rubric Alignment
 
-### Algorithm Design
-
-The solution decomposes the streaming requirement into separate computational components: preprocessing updates, running statistics, metric accumulation, model updates, pipeline orchestration, and visualisation. The tree and ensemble models provide classifier functionality while keeping chunk-based adaptation simple and testable.
-
-### Functionality Implementation
-
-All required streaming modules are implemented in the required coding environment using Python and NumPy. The library supports `partial_fit()`, `update()`, `result()`, `reset()`, and `update_stats()` where required.
-
-### Code Reusability
-
-Each feature is modularised into a separate module. The same preprocessing, model, metrics, and visualisation functions can be reused across scripts, tests, demos, and pipeline workflows.
-
-### Code Maintainability
-
-Functions and classes use meaningful names, docstrings, clear validation, and consistent structure. Batch APIs from Assignment 2.1 are preserved where possible to avoid breaking previous functionality.
-
-### Testing and Debugging Evidence
-
-The project includes unit tests for previous batch features and new streaming behaviour, including incremental scalers, imputer, encoder, metrics, stats, tree, ensemble, pipeline, and stream trainer.
-
-### Coding Style and Documentation
 
 The code follows readable Python style with clear class names, method names, docstrings, and comments where useful.
